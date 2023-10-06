@@ -28,7 +28,9 @@ import { MultivendorPlugin } from './example-plugins/multivendor-plugin/multiven
 
 import { WebhookPlugin } from 'vendure-plugin-webhook/dist/webhook.plugin';
 import { RequestTransformer } from 'vendure-plugin-webhook/dist/api/request-transformer';
-import { stringify } from 'circular-json';
+import { stringify } from 'flatted';
+
+const CircularJSON = require('circular-json');
 
 const stringifyProductTransformer = new RequestTransformer({
     name: 'Stringify Product events',
@@ -36,7 +38,7 @@ const stringifyProductTransformer = new RequestTransformer({
     transform: (event, injector) => {
         if (event instanceof ProductEvent) {
             return {
-                body: stringify(event),
+                body: CircularJSON.stringify(event),
                 headers: {
                     'x-custom-header': 'custom-example-header',
                     'content-type': 'application/json',
@@ -113,10 +115,12 @@ export const devConfig: VendureConfig = {
         //     bufferUpdates: true,
         // }),
         ElasticsearchPlugin.init({
+            host: 'https://localhost',
+            port: 9200,
             clientOptions: {
                 auth: {
-                    username: process.env.ELASTIC_USERNAME || 'elastic',
-                    password: process.env.ELASTIC_PASSWORD || 'Th2uiFYm0+Pp4zyhOXyk',
+                    username: 'elastic',
+                    password: 'Th2uiFYm0+Pp4zyhOXyk',
                 },
                 ssl: {
                     cert: fs.readFileSync(path.resolve(__dirname, 'http_ca.crt')),
