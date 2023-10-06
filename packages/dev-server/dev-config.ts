@@ -11,6 +11,8 @@ import {
     LanguageCode,
     LogLevel,
     VendureConfig,
+    ProductEvent,
+    ProductVariantEvent
 } from '@vendure/core';
 import { ElasticsearchPlugin } from '@vendure/elasticsearch-plugin';
 import { defaultEmailHandlers, EmailPlugin } from '@vendure/email-plugin';
@@ -18,9 +20,33 @@ import { BullMQJobQueuePlugin } from '@vendure/job-queue-plugin/package/bullmq';
 import 'dotenv/config';
 import { compileUiExtensions } from '@vendure/ui-devkit/compiler';
 import path from 'path';
+import * as fs from 'fs';
+import data from "./mapping/indexProperties.json";
 import { DataSourceOptions } from 'typeorm';
 
 import { MultivendorPlugin } from './example-plugins/multivendor-plugin/multivendor.plugin';
+
+import { WebhookPlugin } from 'vendure-plugin-webhook/dist/webhook.plugin';
+import { RequestTransformer } from 'vendure-plugin-webhook/dist/api/request-transformer';
+import { stringify } from 'circular-json';
+
+const stringifyProductTransformer = new RequestTransformer({
+    name: 'Stringify Product events',
+    supportedEvents: [ProductEvent],
+    transform: (event, injector) => {
+        if (event instanceof ProductEvent) {
+            return {
+                body: stringify(event),
+                headers: {
+                    'x-custom-header': 'custom-example-header',
+                    'content-type': 'application/json',
+                },
+            };
+        } else {
+            throw Error(`This transformer is only for ProductEvents!`);
+        }
+    },
+});
 
 /**
  * Config settings used during development
@@ -76,15 +102,32 @@ export const devConfig: VendureConfig = {
             route: 'assets',
             assetUploadDir: path.join(__dirname, 'assets'),
         }),
-        DefaultSearchPlugin.init({ bufferUpdates: false, indexStockStatus: false }),
-        BullMQJobQueuePlugin.init({}),
+        // DefaultSearchPlugin.init({ bufferUpdates: false, indexStockStatus: false }),
+        // BullMQJobQueuePlugin.init({}),
         // DefaultJobQueuePlugin.init({}),
+        DefaultJobQueuePlugin.init({ useDatabaseForBuffer: true }),
         // JobQueueTestPlugin.init({ queueCount: 10 }),
         // ElasticsearchPlugin.init({
         //     host: 'http://localhost',
         //     port: 9200,
         //     bufferUpdates: true,
         // }),
+        ElasticsearchPlugin.init({
+            clientOptions: {
+                auth: {
+                    username: process.env.ELASTIC_USERNAME || 'elastic',
+                    password: process.env.ELASTIC_PASSWORD || 'Th2uiFYm0+Pp4zyhOXyk',
+                },
+                ssl: {
+                    cert: fs.readFileSync(path.resolve(__dirname, 'http_ca.crt')),
+                    rejectUnauthorized: false
+                }
+            },
+            indexPrefix: "search-vendure-",
+            indexSettings: data.settings,
+            indexMappingProperties: data.properties,
+            bufferUpdates: true
+        }),
         EmailPlugin.init({
             devMode: true,
             route: 'mailbox',
@@ -100,6 +143,12 @@ export const devConfig: VendureConfig = {
         AdminUiPlugin.init({
             route: 'admin',
             port: 5001,
+            app: compileUiExtensions({
+                outputPath: path.join(__dirname, './custom-admin-ui'),
+                // Add the WebhookPlugin's UI to the admin
+                extensions: [WebhookPlugin.ui],
+                devMode: true,
+            }),
             // Un-comment to compile a custom admin ui
             // app: compileUiExtensions({
             //     outputPath: path.join(__dirname, './custom-admin-ui'),
@@ -149,11 +198,39 @@ export const devConfig: VendureConfig = {
             //     devMode: true,
             // }),
         }),
+        WebhookPlugin.init({
+            /**
+             * Optional: 'delay' waits and deduplicates events for 3000ms.
+             * If 4 events were fired for the same channel within 3 seconds,
+             * only 1 webhook call will be sent
+             */
+            delay: 3000,
+            events: [ProductEvent, ProductVariantEvent],
+            requestTransformers: [stringifyProductTransformer],
+            /**
+             * Optional: 'requestFn' allows you to send custom headers
+             * and a custom body with your webhook call.
+             * By default, the webhook POST will have an empty body
+             */
+            // requestFn: async (
+            //   event: ProductEvent | ProductVariantEvent,
+            //   injector: Injector
+            // ) => {
+            //   // Get data via injector and build your request headers and body
+            //   const { id } = await injector
+            //     .get(ChannelService)
+            //     .getChannelFromToken(event.ctx.channel.token);
+            //   return {
+            //     headers: { test: '1234' },
+            //     body: JSON.stringify({ createdAt: event.createdAt, channelId: id }),
+            //   };
+            // },
+        }),
     ],
 };
 
 function getDbConfig(): DataSourceOptions {
-    const dbType = process.env.DB || 'mysql';
+    const dbType = process.env.DB || 'postgres';
     switch (dbType) {
         case 'postgres':
             console.log('Using postgres connection');
@@ -163,7 +240,7 @@ function getDbConfig(): DataSourceOptions {
                 host: process.env.DB_HOST || 'localhost',
                 port: Number(process.env.DB_PORT) || 5432,
                 username: process.env.DB_USERNAME || 'postgres',
-                password: process.env.DB_PASSWORD || 'postgres',
+                password: process.env.DB_PASSWORD || 'Admin@123',
                 database: process.env.DB_NAME || 'vendure',
                 schema: process.env.DB_SCHEMA || 'public',
             };

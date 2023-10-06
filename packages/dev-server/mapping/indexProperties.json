@@ -1,0 +1,167 @@
+{
+  "settings": {
+    "index": {
+      "routing": {
+        "allocation": {
+          "include": {
+            "_tier_preference": "data_content"
+          }
+        }
+      },
+      "number_of_shards": "1",
+      "number_of_replicas": "1"
+    }
+  },
+  "properties": {
+    "channelId": {
+      "type": "keyword"
+    },
+    "channelIds": {
+      "type": "keyword"
+    },
+    "collectionIds": {
+      "type": "keyword"
+    },
+    "collectionSlugs": {
+      "type": "keyword"
+    },
+    "currencyCode": {
+      "type": "keyword"
+    },
+    "description": {
+      "type": "text",
+      "fields": {
+        "keyword": {
+          "type": "keyword",
+          "ignore_above": 256
+        }
+      }
+    },
+    "enabled": {
+      "type": "boolean"
+    },
+    "facetIds": {
+      "type": "keyword"
+    },
+    "facetValueIds": {
+      "type": "keyword"
+    },
+    "inStock": {
+      "type": "boolean"
+    },
+    "languageCode": {
+      "type": "keyword"
+    },
+    "price": {
+      "type": "long"
+    },
+    "priceWithTax": {
+      "type": "long"
+    },
+    "productAssetId": {
+      "type": "keyword"
+    },
+    "productChannelIds": {
+      "type": "keyword"
+    },
+    "productCollectionIds": {
+      "type": "keyword"
+    },
+    "productCollectionSlugs": {
+      "type": "keyword"
+    },
+    "productEnabled": {
+      "type": "boolean"
+    },
+    "productFacetIds": {
+      "type": "keyword"
+    },
+    "productFacetValueIds": {
+      "type": "keyword"
+    },
+    "productId": {
+      "type": "keyword"
+    },
+    "productInStock": {
+      "type": "boolean"
+    },
+    "productName": {
+      "type": "text",
+      "fields": {
+        "keyword": {
+          "type": "keyword",
+          "ignore_above": 256
+        }
+      }
+    },
+    "productPreview": {
+      "type": "text",
+      "fields": {
+        "keyword": {
+          "type": "keyword",
+          "ignore_above": 256
+        }
+      }
+    },
+    "productPreviewFocalPoint": {
+      "type": "object"
+    },
+    "productPriceMax": {
+      "type": "long"
+    },
+    "productPriceMin": {
+      "type": "long"
+    },
+    "productPriceWithTaxMax": {
+      "type": "long"
+    },
+    "productPriceWithTaxMin": {
+      "type": "long"
+    },
+    "productVariantAssetId": {
+      "type": "keyword"
+    },
+    "productVariantId": {
+      "type": "keyword"
+    },
+    "productVariantName": {
+      "type": "text",
+      "fields": {
+        "keyword": {
+          "type": "keyword",
+          "ignore_above": 256
+        }
+      }
+    },
+    "productVariantPreview": {
+      "type": "text",
+      "fields": {
+        "keyword": {
+          "type": "keyword",
+          "ignore_above": 256
+        }
+      }
+    },
+    "productVariantPreviewFocalPoint": {
+      "type": "object"
+    },
+    "sku": {
+      "type": "text",
+      "fields": {
+        "keyword": {
+          "type": "keyword",
+          "ignore_above": 256
+        }
+      }
+    },
+    "slug": {
+      "type": "text",
+      "fields": {
+        "keyword": {
+          "type": "keyword",
+          "ignore_above": 256
+        }
+      }
+    }
+  }
+}
